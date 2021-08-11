@@ -184,9 +184,17 @@ class BaseEnv(gym.Env):
             robot = Locobot(self.config)
         else:
             raise Exception("unknown robot type: {}".format(self.config["robot"]))
-
+        
+        # robot2 = Turtlebot(self.config)
         self.scene = scene
-        self.robots = [robot]
+        
+        if self.config.get("robot2", None) == "Turtlebot":
+            robot2 = Turtlebot(self.config)
+            self.robots = [robot, robot2]
+        else:
+            self.robots = [robot]
+
+
         for robot in self.robots:
             self.simulator.import_robot(robot)
 

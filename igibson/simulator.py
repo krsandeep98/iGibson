@@ -242,6 +242,7 @@ class Simulator:
             self.cid = p.connect(p.GUI)
         else:
             self.cid = p.connect(p.DIRECT)
+            # self.cid = p.connect(p.SHARED_MEMORY)
 
         # Simulation reset is needed for deterministic action replay
         if self.vr_settings.reset_sim:

@@ -173,6 +173,7 @@ class BodyPart:
 
     def _state_fields_of_pose_of(self, body_id, link_id=-1):
         """Get pose of body part"""
+        # print("body id in the state_fields_of pose function before get base posn and orn", body_id)
         if link_id == -1:
             (x, y, z), (a, b, c, d) = p.getBasePositionAndOrientation(body_id)
         else:
@@ -368,6 +369,7 @@ class Joint:
         """
         Reset pos and vel of joint
         """
+        # print("bodies, body_index, and joint index in robot base reset state command", self.bodies, self.body_index, self.joint_index)
         p.resetJointState(self.bodies[self.body_index], self.joint_index, targetValue=pos, targetVelocity=vel)
         self.disable_motor()
 
