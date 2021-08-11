@@ -19,6 +19,12 @@ wheel_velocity: 0.8
 torso_lift_velocity: 0.8
 arm_velocity: 0.8
 
+#robot2
+robot2: Turtlebot
+is_discrete: false
+velocity: 1.0
+
+
 # task
 task: room_rearrangement
 load_object_categories: [
