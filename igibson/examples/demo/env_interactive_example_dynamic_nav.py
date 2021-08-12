@@ -16,13 +16,13 @@ def main():
     for j in range(1):
         env.reset()
         for i in range(100):
-            with Profiler("Environment action step"):
-                action = env.action_space.sample()
-                # action1 = env.action_space1.sample()
-                state, reward, done, info = env.step(action)
-                if done:
-                    logging.info("Episode finished after {} timesteps".format(i + 1))
-                    break
+        # with Profiler("Environment action step"):
+            action = env.action_space.sample()
+            # action1 = env.action_space1.sample()
+            state, reward, done, info = env.step(action)
+            if done:
+                logging.info("Episode finished after {} timesteps".format(i + 1))
+                break
     env.close()
 
 
