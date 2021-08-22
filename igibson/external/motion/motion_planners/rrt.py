@@ -47,6 +47,7 @@ def configs(nodes):
 def rrt(start, goal_sample, distance, sample, extend, collision, goal_test=lambda q: False, iterations=RRT_ITERATIONS, goal_probability=.2):
     #goal_test = lambda q: np.linalg.norm(q - goal_sample) < 0.5
     if collision(start):
+        print("Warning: initial configuration is in collision in rrt file")
         return None
     if not callable(goal_sample):
         g = goal_sample

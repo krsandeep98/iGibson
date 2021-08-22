@@ -441,6 +441,7 @@ class iGibsonEnv(BaseEnv):
         self.randomize_domain()
         # move robot away from the scene
         self.robots[0].set_position([100.0, 100.0, 100.0])
+        # self.robots[1].set_position([10.0, 10.0, 0.0])
         self.task.reset_scene(self)
         self.task.reset_agent(self)
         self.simulator.sync()
