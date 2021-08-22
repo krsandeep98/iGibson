@@ -3166,15 +3166,16 @@ def plan_base_motion(body, end_conf, base_limits, obstacles=[], direct=False,
 
     start_conf = get_base_values(body)
     if collision_fn(start_conf):
-        #print("Warning: initial configuration is in collision")
+        print("Warning: initial configuration is in collision")
         return None
     if collision_fn(end_conf):
-        #print("Warning: end configuration is in collision")
+        print("Warning: end configuration is in collision")
         return None
     if direct:
         return direct_path(start_conf, end_conf, extend_fn, collision_fn)
     return birrt(start_conf, end_conf, distance_fn,
                  sample_fn, extend_fn, collision_fn, **kwargs)
+    # return rrt_star(start_conf, end_conf, distance_fn, sample_fn, extend_fn, collision_fn, max_iterations=50, **kwargs)
 
 
 def plan_base_motion_2d(body, end_conf, base_limits, map_2d, occupancy_range, grid_resolution, robot_footprint_radius_in_map,
@@ -3223,6 +3224,7 @@ def plan_base_motion_2d(body, end_conf, base_limits, map_2d, occupancy_range, gr
 
     if np.abs(start_conf[0] - end_conf[0]) < min_goal_dist and np.abs(start_conf[1] - end_conf[1]) < min_goal_dist:
         # do not do plans that is smaller than 30mm
+        print("Warning: start and end conf are very close less than 30mm apart")
         return None
 
     def collision_fn(q):
@@ -3257,10 +3259,10 @@ def plan_base_motion_2d(body, end_conf, base_limits, map_2d, occupancy_range, gr
                       == OccupancyGridState.FREESPACE)
 
     if collision_fn(start_conf):
-        # print("Warning: initial configuration is in collision")
+        print("Warning: initial configuration is in collision")
         return None
     if collision_fn(end_conf):
-        # print("Warning: end configuration is in collision")
+        print("Warning: end configuration is in collision")
         return None
     
     if algorithm == 'direct':
