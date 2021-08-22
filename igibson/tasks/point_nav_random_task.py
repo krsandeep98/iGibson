@@ -26,10 +26,12 @@ class PointNavRandomTask(PointNavFixedTask):
         :return: initial pose and target position
         """
         _, initial_pos = env.scene.get_random_point(floor=self.floor_num)
-        max_trials = 100
+        # initial_pos = [0, 0, 0]
+        max_trials = 100#10
         dist = 0.0
         for _ in range(max_trials):
             _, target_pos = env.scene.get_random_point(floor=self.floor_num)
+            # target_pos = [-1, 1, 0]
             if env.scene.build_graph:
                 _, dist = env.scene.get_shortest_path(
                     self.floor_num, initial_pos[:2], target_pos[:2], entire_path=False

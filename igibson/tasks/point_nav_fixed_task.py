@@ -38,7 +38,7 @@ class PointNavFixedTask(BaseTask):
 
         self.initial_pos = np.array(self.config.get("initial_pos", [0, 0, 0]))
         self.initial_orn = np.array(self.config.get("initial_orn", [0, 0, 0]))
-        self.target_pos = np.array(self.config.get("target_pos", [5, 5, 0]))
+        self.target_pos = np.array(self.config.get("target_pos", [1, -1, 0]))
         self.goal_format = self.config.get("goal_format", "polar")
         self.dist_tol = self.termination_conditions[-1].dist_tol
 

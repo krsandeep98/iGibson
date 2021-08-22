@@ -1,6 +1,8 @@
 # scene
-scene: igibson
-scene_id: Rs_int
+# scene: igibson
+# scene_id: Rs_int
+scene: gibson
+scene_id: Rs
 build_graph: true
 load_texture: true
 pybullet_load_texture: true
@@ -20,10 +22,12 @@ velocity: 1.0
 
 # task
 task: dynamic_nav_random
+# task: point_nav_random
 target_dist_min: 1.0
 target_dist_max: 10.0
 goal_format: polar
 task_obs_dim: 4
+target_pos: [1, -1, 0]
 
 # reward
 reward_type: geodesic
@@ -44,7 +48,7 @@ initial_pos_z_offset: 0.1
 collision_ignore_link_a_ids: [1, 2, 3, 4]  # ignore collisions with these robot links
 
 # sensor spec
-output: [task_obs, rgb, depth, scan]
+output: [task_obs, rgb, depth, scan, occupancy_grid]
 # image
 # ASUS Xtion PRO LIVE
 # https://www.asus.com/us/3D-Sensor/Xtion_PRO_LIVE
@@ -65,6 +69,7 @@ laser_linear_range: 5.6
 laser_angular_range: 240.0
 min_laser_dist: 0.05
 laser_link_name: scan_link
+# laser_link_name: laser_link #for fetch, the scan link is for turtlebot
 
 # sensor noise
 depth_noise_rate: 0.0

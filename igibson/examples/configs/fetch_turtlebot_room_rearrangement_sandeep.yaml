@@ -1,8 +1,8 @@
 # scene
-# scene: igibson
-# scene_id: Rs_int
-scene: gibson
-scene_id: Rs
+scene: igibson
+scene_id: Rs_int
+# scene: gibson
+# scene_id: Rs
 build_graph: true
 load_texture: true
 pybullet_load_texture: true
@@ -22,13 +22,13 @@ torso_lift_velocity: 0.8
 arm_velocity: 0.8
 
 #robot2
-# robot2: Turtlebot
-# is_discrete: false
-# velocity: 1.0
+robot2: Turtlebot
+is_discrete: false
+velocity: 1.0
 
 
 # task
-task: dynamic_nav_random
+task: point_nav_fixed
 # task: room_rearrangement
 load_object_categories: [
   bottom_cabinet,
