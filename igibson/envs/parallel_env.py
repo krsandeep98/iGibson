@@ -246,7 +246,7 @@ if __name__ == "__main__":
     config_filename = os.path.join(os.path.dirname(igibson.__file__), "test", "test.yaml")
 
     def load_env():
-        return iGibsonEnv(config_file=config_filename, mode="headless")
+        return iGibsonEnv(config_file=config_filename, mode="gui")
 
     parallel_env = ParallelNavEnv([load_env] * 2, blocking=False)
 

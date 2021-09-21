@@ -8,9 +8,11 @@ import time
 
 import ray
 
+import os
+import igibson
 from igibson.envs.igibson_env import iGibsonEnv
 
-ray.init()
+ray.init(num_cpus=8)
 
 
 @ray.remote
@@ -24,7 +26,8 @@ class iGibsonRayEnv(iGibsonEnv):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", "-c", help="which config file to use [default: use yaml files in examples/configs]")
+    parser.add_argument("--config", "-c", help="which config file to use [default: use yaml files in examples/configs]",
+    default = os.path.join(igibson.example_config_path, "fetch_turtlebot_room_rearrangement.yaml"))
     parser.add_argument(
         "--mode",
         "-m",
@@ -39,16 +42,16 @@ if __name__ == "__main__":
     )
 
     step_time_list = []
-    for episode in range(100):
+    for episode in range(10):
         print("Episode: {}".format(episode))
         start = time.time()
         env.reset.remote()
-        for _ in range(100):  # 10 seconds
+        for _ in range(10):  # 10 seconds
             # This is unnecessarily slow, if you can avoid calling ray.get and directly pass
             # the handle to your actor
             action = ray.get(env.sample_action_space.remote())
             state, reward, done, _ = ray.get(env.step.remote(action))
-            print("reward", reward)
+            # print("reward", reward)
             if done:
                 break
         print(
@@ -56,4 +59,5 @@ if __name__ == "__main__":
                 ray.get(env.get_current_step.remote()), time.time() - start
             )
         )
-    env.remote.close()
+    # env.remote.close()
+    env.close.remote()
