@@ -4,6 +4,7 @@ import time
 from collections import OrderedDict
 
 import gym
+# from gym.utils import EzPickle
 import numpy as np
 import pybullet as p
 from transforms3d.euler import euler2quat
@@ -23,8 +24,9 @@ from igibson.tasks.room_rearrangement_task import RoomRearrangementTask
 from igibson.utils.constants import MAX_CLASS_COUNT, MAX_INSTANCE_COUNT
 from igibson.utils.utils import quatToXYZW
 
+from igibson.external.pybullet_tools.utils import pairwise_collision, set_base_values
 
-class iGibsonEnv(BaseEnv):
+class iGibsonEnv(BaseEnv):#, EzPickle
     """
     iGibson Environment (OpenAI Gym interface)
     """
@@ -59,6 +61,16 @@ class iGibsonEnv(BaseEnv):
             device_idx=device_idx,
             render_to_tensor=render_to_tensor,
         )
+        # EzPickle.__init__(
+        #     self,
+        #     config_file=config_file,
+        #     # scene_id=scene_id,
+        #     # mode=mode,
+        #     # action_timestep=action_timestep,
+        #     # physics_timestep=physics_timestep,
+        #     # device_idx=device_idx,
+        #     # render_to_tensor=render_to_tensor,
+        #     )
         self.automatic_reset = automatic_reset
 
     def load_task_setup(self):
@@ -324,9 +336,10 @@ class iGibsonEnv(BaseEnv):
         self.simulator_step()
         collisions = list(p.getContactPoints(bodyA=body_id))
 
-        if logging.root.level <= logging.DEBUG:  # Only going into this if it is for logging --> efficiency
-            for item in collisions:
-                logging.debug("bodyA:{}, bodyB:{}, linkA:{}, linkB:{}".format(item[1], item[2], item[3], item[4]))
+        # if logging.root.level <= logging.DEBUG:  # Only going into this if it is for logging --> efficiency
+        # for item in collisions:
+        #     # logging.debug("bodyA:{}, bodyB:{}, linkA:{}, linkB:{}".format(item[1], item[2], item[3], item[4]))
+        #     print("bodyA:{}, bodyB:{}, linkA:{}, linkB:{}".format(item[1], item[2], item[3], item[4]))
 
         return len(collisions) == 0
 
@@ -375,6 +388,15 @@ class iGibsonEnv(BaseEnv):
         body_id = obj.robot_ids[0] if is_robot else obj.body_id
         has_collision = self.check_collision(body_id)
         return has_collision
+
+    def collision_function(self, body, q, orn=None):
+        obstacles = []
+        obstacles.append(self.scene.mesh_body_id)
+        # print('mp_obstacles in collision function in igibson_env', obstacles)
+        max_distance = 0
+        set_base_values(body.robot_ids[0], q)
+        # self.set_pos_orn_with_z_offset(body, q, orn)#set base values function from pybullet utils
+        return not(any(pairwise_collision(body.robot_ids[0], obs, max_distance=max_distance) for obs in obstacles))
 
     def land(self, obj, pos, orn):
         """

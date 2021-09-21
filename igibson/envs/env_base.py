@@ -1,4 +1,5 @@
 import gym
+from gym.utils import EzPickle
 
 from igibson.render.mesh_renderer.mesh_renderer_settings import MeshRendererSettings
 from igibson.robots.ant_robot import Ant
@@ -18,7 +19,7 @@ from igibson.simulator import Simulator
 from igibson.utils.utils import parse_config
 
 
-class BaseEnv(gym.Env):
+class BaseEnv(gym.Env):#, EzPickle
     """
     Base Env class, follows OpenAI Gym interface
     Handles loading scene and robot
@@ -43,6 +44,18 @@ class BaseEnv(gym.Env):
         :param physics_timestep: physics timestep for pybullet
         :param device_idx: device_idx: which GPU to run the simulation and rendering on
         """
+
+        # EzPickle.__init__(
+        #     self,
+        #     config_file=config_file,
+        #     # scene_id=scene_id,
+        #     # mode=mode,
+        #     # action_timestep=action_timestep,
+        #     # physics_timestep=physics_timestep,
+        #     # device_idx=device_idx,
+        #     # render_to_tensor=render_to_tensor,
+        #     )
+        
         self.config = parse_config(config_file)
         if scene_id is not None:
             self.config["scene_id"] = scene_id
