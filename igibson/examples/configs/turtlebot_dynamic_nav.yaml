@@ -22,7 +22,7 @@ velocity: 1.0
 
 # task
 task: dynamic_nav_random
-# task: point_nav_random
+# task: point_nav_fixed
 target_dist_min: 1.0
 target_dist_max: 10.0
 goal_format: polar

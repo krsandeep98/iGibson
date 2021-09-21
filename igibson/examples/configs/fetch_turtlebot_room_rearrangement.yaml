@@ -1,7 +1,7 @@
 # scene
 # scene: igibson
 # scene_id: Rs_int
-scene: gibson
+scene: gibson #stadium
 scene_id: Rs
 build_graph: true
 load_texture: true
