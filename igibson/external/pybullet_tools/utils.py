@@ -16,9 +16,12 @@ from collections import defaultdict, deque, namedtuple
 from itertools import product, combinations, count
 
 from .transformations import quaternion_from_matrix, unit_vector
+# from igibson.envs.igibson_env import test_valid_position
 
 from igibson.external.motion.motion_planners.rrt_connect import birrt, direct_path
 from igibson.external.motion.motion_planners.rrt_star import rrt_star
+from igibson.external.motion.motion_planners.rrg import rrg
+from igibson.external.motion.motion_planners.rrg_dynamic import rrg_dynamic
 from igibson.external.motion.motion_planners.lazy_prm import lazy_prm_replan_loop
 from igibson.external.motion.motion_planners.rrt import rrt
 from igibson.external.motion.motion_planners.smoothing import optimize_path
@@ -26,6 +29,8 @@ from igibson.utils.constants import OccupancyGridState
 #from ..motion.motion_planners.rrt_connect import birrt, direct_path
 import cv2
 
+
+# import matplotlib.pyplot as plt  
 # from future_builtins import map, filter
 # from builtins import input # TODO - use future
 try:
@@ -3121,7 +3126,7 @@ def get_base_distance_fn(weights=1*np.ones(3)):
 
 def plan_base_motion(body, end_conf, base_limits, obstacles=[], direct=False,
                      weights=1*np.ones(3), resolutions=0.05*np.ones(3),
-                     max_distance=MAX_DISTANCE, **kwargs):
+                     max_distance=MAX_DISTANCE, algorithm = 'rrg', max_time=10, **kwargs):
     def sample_fn():
         x, y = np.random.uniform(*base_limits)
         theta = np.random.uniform(*CIRCULAR_LIMITS)
@@ -3161,21 +3166,200 @@ def plan_base_motion(body, end_conf, base_limits, obstacles=[], direct=False,
 
     def collision_fn(q):
         # TODO: update this function
-        set_base_values(body, q)
-        return any(pairwise_collision(body, obs, max_distance=max_distance) for obs in obstacles)
+        set_base_values(body.robot_ids[0], q)
+        return any(pairwise_collision(body.robot_ids[0], obs, max_distance=max_distance) for obs in obstacles)
+        # return not(env.collision_function(body, q))
+    # collision_function = not(env.collision_function())
 
-    start_conf = get_base_values(body)
+    start_conf = get_base_values(body.robot_ids[0])#body
     if collision_fn(start_conf):
-        print("Warning: initial configuration is in collision")
-        return None
+        print("WARNING: initial configuration is in collision in plan base motion call")
+        return None, True
     if collision_fn(end_conf):
-        print("Warning: end configuration is in collision")
-        return None
-    if direct:
-        return direct_path(start_conf, end_conf, extend_fn, collision_fn)
-    return birrt(start_conf, end_conf, distance_fn,
-                 sample_fn, extend_fn, collision_fn, **kwargs)
-    # return rrt_star(start_conf, end_conf, distance_fn, sample_fn, extend_fn, collision_fn, max_iterations=50, **kwargs)
+        print("WARNING: end configuration is in collision in plan base motion call")
+        return None, True
+    # if direct:
+    #     return direct_path(start_conf, end_conf, extend_fn, collision_fn)
+    # return birrt(start_conf, end_conf, distance_fn,
+    #              sample_fn, extend_fn, collision_fn, **kwargs)
+
+    if algorithm == 'rrg':
+        return rrg(start_conf, end_conf, distance_fn, sample_fn, extend_fn, collision_fn, 
+                    max_time = max_time, max_iterations=500, **kwargs)
+    else:
+        return rrt(start_conf, end_conf, distance_fn, sample_fn, extend_fn, collision_fn, iterations=500, **kwargs)
+    # return rrg(start_conf, end_conf, distance_fn, sample_fn, extend_fn, collision_fn, max_time=50, max_iterations=5000, **kwargs)
+
+
+def plan_base_motion_ref(body, end_conf, base_limits, obstacles=[], direct=False,
+                     weights=1*np.ones(3), resolutions=0.05*np.ones(3),
+                     max_distance=MAX_DISTANCE, algorithm = 'rrg', max_time=50, **kwargs):
+    def sample_fn():
+        x, y = np.random.uniform(*base_limits)
+        theta = np.random.uniform(*CIRCULAR_LIMITS)
+        return (x, y, theta)
+
+    difference_fn = get_base_difference_fn()
+    distance_fn = get_base_distance_fn(weights=weights)
+
+    def extend_fn(q1, q2):
+        target_theta = np.arctan2(q2[1]-q1[1], q2[0]-q1[0])
+
+        n1 = int(np.abs(circular_difference(
+            target_theta, q1[2]) / resolutions[2])) + 1
+        n3 = int(np.abs(circular_difference(
+            q2[2], target_theta) / resolutions[2])) + 1
+        steps2 = np.abs(np.divide(difference_fn(q2, q1), resolutions))
+        n2 = int(np.max(steps2)) + 1
+
+        for i in range(n1):
+            q = (i / (n1)) * \
+                np.array(difference_fn(
+                    (q1[0], q1[1], target_theta), q1)) + np.array(q1)
+            q = tuple(q)
+            yield q
+
+        for i in range(n2):
+            q = (i / (n2)) * np.array(difference_fn((q2[0], q2[1], target_theta),
+                                                    (q1[0], q1[1], target_theta))) + np.array((q1[0], q1[1], target_theta))
+            q = tuple(q)
+            yield q
+
+        for i in range(n3):
+            q = (i / (n3)) * np.array(difference_fn(q2,
+                                                    (q2[0], q2[1], target_theta))) + np.array((q2[0], q2[1], target_theta))
+            q = tuple(q)
+            yield q
+
+    def collision_fn(q):
+        # TODO: update this function
+        set_base_values(body.robot_ids[0], q)
+        return any(pairwise_collision(body.robot_ids[0], obs, max_distance=max_distance) for obs in obstacles)
+        # return not(env.collision_function(body, q))
+    # collision_function = not(env.collision_function())
+
+    start_conf = get_base_values(body.robot_ids[0])#body
+    # print("start conf in the planmotion ref call", start_conf)
+    if collision_fn(start_conf):
+        print("WARNING: initial configuration is in collision in plan base motion call")
+        return None, None, True
+    if collision_fn(end_conf):
+        print("WARNING: end configuration is in collision in plan base motion call")
+        return None, None, True
+    # if direct:
+    #     return direct_path(start_conf, end_conf, extend_fn, collision_fn)
+    # return birrt(start_conf, end_conf, distance_fn,
+    #              sample_fn, extend_fn, collision_fn, **kwargs)
+
+    # if algorithm == 'rrg':
+    ref_rrg = rrg_dynamic(end_conf, distance_fn, sample_fn, extend_fn, collision_fn)#, **kwargs
+    ref_rrg.rrg(start_conf, max_time = max_time, max_iterations=500)
+
+    return ref_rrg, ref_rrg.reference_traj, False
+    # else:
+    #     return rrt(start_conf, end_conf, distance_fn, sample_fn, extend_fn, collision_fn, iterations=500, **kwargs)
+
+def plan_base_motion_ref_stat_dynamic(body, end_conf, base_limits, obstacles=[], dynamic_obstacles = [], direct=False,
+                     weights=1*np.ones(3), resolutions=0.05*np.ones(3),
+                     max_distance=MAX_DISTANCE, algorithm = 'rrg', max_time=50, **kwargs):
+    def sample_fn():
+        x, y = np.random.uniform(*base_limits)
+        theta = np.random.uniform(*CIRCULAR_LIMITS)
+        return (x, y, theta)
+
+    difference_fn = get_base_difference_fn()
+    distance_fn = get_base_distance_fn(weights=weights)
+
+    def extend_fn(q1, q2):
+        target_theta = np.arctan2(q2[1]-q1[1], q2[0]-q1[0])
+
+        n1 = int(np.abs(circular_difference(
+            target_theta, q1[2]) / resolutions[2])) + 1
+        n3 = int(np.abs(circular_difference(
+            q2[2], target_theta) / resolutions[2])) + 1
+        steps2 = np.abs(np.divide(difference_fn(q2, q1), resolutions))
+        n2 = int(np.max(steps2)) + 1
+
+        for i in range(n1):
+            q = (i / (n1)) * \
+                np.array(difference_fn(
+                    (q1[0], q1[1], target_theta), q1)) + np.array(q1)
+            q = tuple(q)
+            yield q
+
+        for i in range(n2):
+            q = (i / (n2)) * np.array(difference_fn((q2[0], q2[1], target_theta),
+                                                    (q1[0], q1[1], target_theta))) + np.array((q1[0], q1[1], target_theta))
+            q = tuple(q)
+            yield q
+
+        for i in range(n3):
+            q = (i / (n3)) * np.array(difference_fn(q2,
+                                                    (q2[0], q2[1], target_theta))) + np.array((q2[0], q2[1], target_theta))
+            q = tuple(q)
+            yield q
+
+    def collision_fn(q):
+        # TODO: update this function
+        set_base_values(body.robot_ids[0], q)
+        return any(pairwise_collision(body.robot_ids[0], obs, max_distance=max_distance) for obs in obstacles)
+        # return not(env.collision_function(body, q))
+    # collision_function = not(env.collision_function())
+
+    def collision_fn_dynamic(q):
+        # TODO: update this function
+        set_base_values(body.robot_ids[0], q)
+        return any(pairwise_collision(body.robot_ids[0], obs, max_distance=max_distance) for obs in dynamic_obstacles)
+
+    start_conf = get_base_values(body.robot_ids[0])#body
+    # print("start conf in the planmotion ref call", start_conf)
+    # if collision_fn(start_conf):
+    #     print("WARNING: initial configuration is in collision in plan base motion call for static one")
+    #     return None, None, True
+    # if collision_fn(end_conf):
+    #     print("WARNING: end configuration is in collision in plan base motion call for static one")
+    #     return None, None, True
+    
+    if collision_fn_dynamic(start_conf):
+        print("WARNING: initial configuration is in collision in plan base motion call for dynamic one")
+        return None, None, True
+    if collision_fn_dynamic(end_conf):
+        print("WARNING: end configuration is in collision in plan base motion call for dynamic one")
+        return None, None, True
+    # if direct:
+    #     return direct_path(start_conf, end_conf, extend_fn, collision_fn)
+    # return birrt(start_conf, end_conf, distance_fn,
+    #              sample_fn, extend_fn, collision_fn, **kwargs)
+
+    # if algorithm == 'rrg':
+    ref_rrg = rrg_dynamic(end_conf, distance_fn, sample_fn, extend_fn, collision_fn, collision_fn_dynamic)#, **kwargs
+    ref_rrg.rrg(start_conf, max_time = max_time, max_iterations=500)
+
+    return ref_rrg, ref_rrg.reference_traj, False
+
+def plan_base_motion_update_dynamic_rrg(ref_rrg, body, ref_traj, end_conf,  obstacles=[],
+                     max_distance=MAX_DISTANCE,  max_time=10):
+    
+    # def collision_fn(q):
+    #     # TODO: update this function
+    #     set_base_values(body.robot_ids[0], q)
+    #     return any(pairwise_collision(body.robot_ids[0], obs, max_distance=max_distance) for obs in obstacles)
+    
+
+    start_conf = get_base_values(body.robot_ids[0])#body
+    # print("start conf in the planmotion update ref call", start_conf)
+    # if collision_fn(start_conf):
+    #     print("WARNING: initial configuration is in collision in plan base motion call")
+    #     return None, True
+    # if collision_fn(end_conf):
+    #     print("WARNING: end configuration is in collision in plan base motion call update dynamic rrg")
+    #     return None, True
+    
+    # ref_rrg = rrg_dynamic(end_conf, distance_fn, sample_fn, extend_fn, collision_fn)#, **kwargs
+    # collision_var = False
+    collision_var = ref_rrg.rrg_update(start_conf, ref_traj, max_time = max_time, max_iterations=250)
+    return ref_rrg.reference_traj, collision_var#(not collision_var) #False
+
 
 
 def plan_base_motion_2d(body, end_conf, base_limits, map_2d, occupancy_range, grid_resolution, robot_footprint_radius_in_map,
@@ -3239,7 +3423,7 @@ def plan_base_motion_2d(body, end_conf, base_limits, map_2d, occupancy_range, gr
         pts = np.array(end_in_start_frame) / (occupancy_range / 2) * \
             (grid_resolution / 2) + grid_resolution / 2
         pts = pts.astype(np.int32)
-        # print(pts)
+        # print("pts in collision function and q",pts, q)
 
         if pts[0] < robot_footprint_radius_in_map or pts[1] < robot_footprint_radius_in_map \
             or pts[0] > grid_resolution - robot_footprint_radius_in_map - 1 or pts[
@@ -3249,6 +3433,7 @@ def plan_base_motion_2d(body, end_conf, base_limits, map_2d, occupancy_range, gr
         # plt.figure()
         # plt.imshow(map_2d[pts[0]-1:pts[0]+1, pts[1]-1:pts[1]+1])
         # plt.colorbar()
+        # plt.show()
         mask = np.zeros((robot_footprint_radius_in_map * 2 + 1,
                          robot_footprint_radius_in_map * 2 + 1))
         cv2.circle(mask, (robot_footprint_radius_in_map, robot_footprint_radius_in_map), robot_footprint_radius_in_map,
@@ -3262,7 +3447,7 @@ def plan_base_motion_2d(body, end_conf, base_limits, map_2d, occupancy_range, gr
         print("Warning: initial configuration is in collision")
         return None
     if collision_fn(end_conf):
-        print("Warning: end configuration is in collision")
+        print("Warning: end configuration is in collision, how can there be so much collision")
         return None
     
     if algorithm == 'direct':
@@ -3272,6 +3457,8 @@ def plan_base_motion_2d(body, end_conf, base_limits, map_2d, occupancy_range, gr
                      sample_fn, extend_fn, collision_fn, **kwargs)
     elif algorithm == 'rrt_star':
         path = rrt_star(start_conf, end_conf, distance_fn, sample_fn, extend_fn, collision_fn, max_iterations=5000, **kwargs)
+    elif algorithm == 'rrg':
+        path = rrg(start_conf, end_conf, distance_fn, sample_fn, extend_fn, collision_fn, max_iterations=500, **kwargs)
     elif algorithm == 'rrt':
         path = rrt(start_conf, end_conf, distance_fn, sample_fn, extend_fn, collision_fn, iterations=5000, **kwargs)
     elif algorithm == 'lazy_prm':
