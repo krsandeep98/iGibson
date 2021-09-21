@@ -40,19 +40,26 @@ class DynamicNavRandomTask(PointNavRandomTask):
 
         :param env: environment instance
         """
-        max_trials = 100
+        max_trials = 10
         for robot in self.dynamic_objects:
             # TODO: p.saveState takes a few seconds, need to speed up
             state_id = p.saveState()
             for _ in range(max_trials):
-                _, pos = env.scene.get_random_point(floor=self.floor_num)
+                # _, pos = env.scene.get_random_point(floor=self.floor_num)
+                pos = [-1.5, 0.75, 0]
+                # pos = [1, -1, 0]
+                # orn = np.array([0, 0, 3*np.pi / 4])
                 orn = np.array([0, 0, np.random.uniform(0, np.pi * 2)])
-                reset_success = env.test_valid_position(robot, pos, orn)
+                reset_success_test = env.test_valid_position(robot, pos, orn)
+                # reset_success = env.collision_function(robot, pos)
+                # print("validity of goal for dynamic turtlebot in task file test_fn, coll_fn", reset_success_test, reset_success)
+                # print("validity of start for dynamic turtlebot in task file", reset_success, pos, orn)
+                # print("validity of goal for dynamic turtlebot in task file for 1, 1, 0", env.collision_function(robot, [1, 1, 0]))
                 p.restoreState(state_id)
-                if reset_success:
+                if reset_success_test:
                     break
 
-            if not reset_success:
+            if not reset_success_test:
                 print("WARNING: Failed to reset dynamic obj without collision")
 
             env.land(robot, pos, orn)
