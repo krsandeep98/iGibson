@@ -5,3 +5,4 @@ dataset
 ig_dataset
 render/coord.npy
 render/model.pth
+igibson/examples/demo/terminal_outputs_for_different_experiments/
