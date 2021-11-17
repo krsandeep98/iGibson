@@ -55,7 +55,10 @@ def plan_base_motions(env, goal, robot_number = 0):
                 np.array([-half_occupancy_range, -half_occupancy_range]),
             ]
         ]
-
+        mp_obstacles = []
+        mp_obstacles.append(env.scene.mesh_body_id)# for the static scenes
+        # mp_obstacles.extend(env.scene.get_body_ids()) #for the interactive ones
+        
         # print("occ_range in the plan base motion function", occupancy_range)
         # print("grid resolution in the plan base motion function", env.grid_resolution)
         # print("robo footprint in the plan base motion function", env.sensors["scan_occ"].robot_footprint_radius_in_map)
@@ -73,7 +76,7 @@ def plan_base_motions(env, goal, robot_number = 0):
         #     robot_footprint_radius_in_map=env.sensors["scan_occ"].robot_footprint_radius_in_map,
         #     resolutions=np.array([0.05, 0.05, 0.05]),
         #     obstacles=[],
-        #     algorithm="rrt",
+        #     algorithm="rrg",
         #     optimize_iter=10,
         # )
 
@@ -86,7 +89,8 @@ def plan_base_motions(env, goal, robot_number = 0):
             # grid_resolution=env.grid_resolution,
             # robot_footprint_radius_in_map=env.sensors["scan_occ"].robot_footprint_radius_in_map,
             resolutions=np.array([0.05, 0.05, 0.05]),
-            obstacles=[],
+            # obstacles=[],
+            obstacles = mp_obstacles,
             # algorithm="rrt",
             # optimize_iter=10,
         )
@@ -128,7 +132,7 @@ def dry_run_base_plan(env, path, path1):
                 set_base_values_with_z(
                     env.robots[0].robot_ids[0], [way_point[0], way_point[1], way_point[2]], z=env.initial_pos_z_offset
                 )
-                env.simulator.sync()
+                env.simulator.step()#sync function as well, doesn't apply physics simulation
                 # time.sleep(0.005) # for animation
         else:
             # the next line is for non-gui modes
@@ -142,7 +146,7 @@ def dry_run_base_plan(env, path, path1):
                 set_base_values_with_z(
                     env.robots[1].robot_ids[0], [way_point[0], way_point[1], way_point[2]], z=env.initial_pos_z_offset
                 )
-                env.simulator.sync()
+                env.simulator.step()
                 # time.sleep(0.005) # for animation
         else:
             # the next line is for non-gui modes
@@ -167,7 +171,7 @@ def main():
     # dry_run_base_plan(env, path_for_base, path_for_base1)
     dry_run_base_plan(env, path_for_base, None)
 
-    # for _ in range(24000):  # at least 10 seconds
+    # for _ in range(2400):  # at least 10 seconds
     #     p.stepSimulation()
 
 
