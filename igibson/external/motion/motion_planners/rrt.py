@@ -48,7 +48,7 @@ def rrt(start, goal_sample, distance, sample, extend, collision, goal_test=lambd
     #goal_test = lambda q: np.linalg.norm(q - goal_sample) < 0.5
     if collision(start):
         print("Warning: initial configuration is in collision in rrt file")
-        return None
+        return None, True
     if not callable(goal_sample):
         g = goal_sample
         goal_sample = lambda: g
@@ -64,8 +64,8 @@ def rrt(start, goal_sample, distance, sample, extend, collision, goal_test=lambd
             last = TreeNode(q, parent=last)
             nodes.append(last)
             if np.linalg.norm(np.array(last.config) - goal_sample()) < 0.5:#goal_test(last.config):
-                return configs(last.retrace())
+                return configs(last.retrace()), False
         else:
             if goal:
-                return configs(last.retrace())
-    return None
+                return configs(last.retrace()), False
+    return None, False

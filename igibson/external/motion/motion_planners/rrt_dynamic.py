@@ -87,7 +87,7 @@ def safe_path_update(sequence, collision):
         if collision(q):
             # break
             # print("config in collision in safe path update fn, which one and length", q, count, len(sequence))
-            print("config in collision in safe path update fn, which one and length", count, len(sequence))
+            print("config in collision in rrt safe path update fn, which one and length", count, len(sequence))
             # q.valid = False
             # if safety_counter == len(sequence):
             safety_counter = count
@@ -98,7 +98,7 @@ def safe_path_update(sequence, collision):
     return sequence[:safety_counter], safety_counter
 
 
-class rrg_dynamic(object):
+class rrt_dynamic(object):
 
     def __init__(self, goal, distance, sample, extend, collision, collision_d):
         
@@ -114,7 +114,7 @@ class rrg_dynamic(object):
 
 
     # def rrg(start, goal, distance, sample, extend, collision, radius=0.5, max_time=INF, max_iterations=INF, goal_probability=.2, informed=True):
-    def rrg(self, start, radius=0.5, max_time=INF, max_iterations=INF, goal_probability=.2, informed=True):
+    def rrt(self, start, radius=0.5, max_time=INF, max_iterations=INF, goal_probability=.2, informed=True):
         
         # nodes = [OptimalNode(start)]
         self.nodes.append(OptimalNode(start))
@@ -145,8 +145,8 @@ class rrg_dynamic(object):
             # this distance of 0.01 is different from the one which is being used to detect if goal has been reached in the main file
             # that is slightly smaller and if the following is satisfied then, the main function would obviously be true
             if do_goal and self.distance(new.config, self.goal) < 1e-2:
-                print("YAY!! distance between start and goal in rrg call, and size of tree", self.distance(start, self.goal), len(self.nodes))
-                print("goal_n is being set in rrg , time taken", it , time()- t0)
+                print("YAY!! distance between start and goal in rrt dynamic call, and size of tree", self.distance(start, self.goal), len(self.nodes))
+                print("goal_n is being set in rrt dynamic call", it , time()- t0)
                 goal_n = new
                 goal_n.set_solution(True)
                 self.reference_traj = goal_n.retrace()
@@ -155,20 +155,22 @@ class rrg_dynamic(object):
             # neighbors = filter(lambda n: distance(
             #    n.config, new.config) < radius, nodes)
             # print('num neighbors', len(list(neighbors)))
-            k = 10
-            k = np.min([k, len(self.nodes)])
-            dists = [self.distance(n.config, new.config) for n in self.nodes]
-            neighbors = [self.nodes[i] for i in np.argsort(dists)[:k]]
+            # k = 10
+            # k = np.min([k, len(self.nodes)])
+            # dists = [self.distance(n.config, new.config) for n in self.nodes]
+            # neighbors = [self.nodes[i] for i in np.argsort(dists)[:k]]
             #print(neighbors)
 
             self.nodes.append(new)
 
-            for n in neighbors:
-                d = self.distance(n.config, new.config)
-                if n.cost + d < new.cost:#this is not needed in the rrg step as we add all the neighbors to the new node
-                    path = safe_path(self.extend(n.config, new.config), self.collision_static)
-                    if len(path) != 0 and self.distance(new.config, path[-1]) < 1e-2:
-                        new.rewire(n, d, path[:-1], iteration=it)
+            # for n in neighbors:
+            #     d = self.distance(n.config, new.config)
+            #     if n.cost + d < new.cost:#this is not needed in the rrg step as we add all the neighbors to the new node
+            #         path = safe_path(self.extend(n.config, new.config), self.collision_static)
+            #         if len(path) != 0 and self.distance(new.config, path[-1]) < 1e-2:
+            #             new.rewire(n, d, path[:-1], iteration=it)
+
+
             # for n in neighbors:  # TODO - avoid repeating work
             #     d = distance(new.config, n.config)
             #     if new.cost + d < n.cost:
@@ -182,8 +184,8 @@ class rrg_dynamic(object):
             #         if len(path) != 0 and self.distance(n.config, path[-1]) < 1e-2:
             #             n.rewire(new, d, path[:-1], iteration=it)
         if goal_n is None:
-            print("NO!!! distance between start and goal in rrg call and length", self.distance(start, self.goal), len(self.nodes))
-            print("goal_n is none in rrg call, time taken", it, time()- t0)
+            print("NO!!! distance between start and goal in rrt dynamic call and length", self.distance(start, self.goal), len(self.nodes))
+            print("goal_n is none in rrt dynamic call", it, time()- t0)
         #     return None, False
         
         # return goal_n.retrace(), False
@@ -231,14 +233,14 @@ class rrg_dynamic(object):
                 # return True
                 return 4
     
-    def rrg_update_2paths(self, start, ref_path, max_time=INF, max_iterations=INF, goal_probability=.2, informed=True):
+    def rrt_update_2paths(self, start, ref_path, max_time=INF, max_iterations=INF, goal_probability=.2, informed=True):
         
         # TODO need to change that according to how safe the ref path actually is
         if ref_path is None or len(ref_path)==0:
             # print("calling the short rrg in the update fn")
             self.reference_traj = None
             self.next_traj = None
-            collision_var = self.rrg_short(start, self.collision_dynamic, max_time, max_iterations)
+            collision_var = self.rrt_short(start, self.collision_dynamic, max_time, max_iterations)
             return collision_var
         else:
             updated_path, safety_counter = safe_path_update(ref_path, self.collision_dynamic)
@@ -255,7 +257,7 @@ class rrg_dynamic(object):
                 # return True
                 return 4
     
-    def rrg_short(self, start, collision, max_time=INF, max_iterations=INF, goal_probability=.2, informed=True):
+    def rrt_short(self, start, collision, max_time=INF, max_iterations=INF, goal_probability=.2, informed=True):
         
         # this returns true if there is no collision detected for the start and goal and we are either able to find the path or not
         # it would return false if there is collision in start or goal according to the dynamic obstacles
@@ -263,11 +265,11 @@ class rrg_dynamic(object):
         # nodes = [OptimalNode(start)]
         # self.nodes.append(OptimalNode(start))
         if collision(self.goal):
-            print("goal is in collision in rrg short function")
+            print("goal is in collision in rrt short function")
             # return False
             return 1
         if collision(start):
-            print("start is in collision in rrg short function")
+            print("start is in collision in rrt short function")
             # return False
             return 0
         goal_n = None
@@ -297,8 +299,8 @@ class rrg_dynamic(object):
             # this distance of 0.01 is different from the one which is being used to detect if goal has been reached in the main file
             # that is slightly smaller and if the following is satisfied then, the main function would obviously be true
             if do_goal and self.distance(new.config, self.goal) < 1e-2:
-                print("YAY!! distance between start and goal in update short rrg call, tree size", self.distance(start, self.goal), len(self.nodes))
-                print("goal_n is being set in short rrg call, time", it, time()- t0)
+                print("YAY!! distance between start and goal in update short rrt call", self.distance(start, self.goal), len(self.nodes))
+                print("goal_n is being set in short rrt call, time", it, time()- t0)
                 goal_n = new
                 goal_n.set_solution(True)
                 # self.reference_traj = goal_n.retrace()
@@ -312,20 +314,22 @@ class rrg_dynamic(object):
             # print('num neighbors', len(list(neighbors)))
             
             #this k can be reduced to take care of the short time 
-            k = 10#10
-            k = np.min([k, len(self.nodes)])
-            dists = [self.distance(n.config, new.config) for n in self.nodes]
-            neighbors = [self.nodes[i] for i in np.argsort(dists)[:k]]
+            # k = 10#10
+            # k = np.min([k, len(self.nodes)])
+            # dists = [self.distance(n.config, new.config) for n in self.nodes]
+            # neighbors = [self.nodes[i] for i in np.argsort(dists)[:k]]
             #print(neighbors)
 
             self.nodes.append(new)
 
-            for n in neighbors:
-                d = self.distance(n.config, new.config)
-                if n.cost + d < new.cost:#this is not needed in the rrg step as we add all the neighbors to the new node
-                    path = safe_path(self.extend(n.config, new.config), collision)
-                    if len(path) != 0 and self.distance(new.config, path[-1]) < 1e-2:
-                        new.rewire(n, d, path[:-1], iteration=it)
+            # for n in neighbors:
+            #     d = self.distance(n.config, new.config)
+            #     if n.cost + d < new.cost:#this is not needed in the rrg step as we add all the neighbors to the new node
+            #         path = safe_path(self.extend(n.config, new.config), collision)
+            #         if len(path) != 0 and self.distance(new.config, path[-1]) < 1e-2:
+            #             new.rewire(n, d, path[:-1], iteration=it)
+
+
             # for n in neighbors:  # TODO - avoid repeating work
             #     d = distance(new.config, n.config)
             #     if new.cost + d < n.cost:
@@ -339,8 +343,8 @@ class rrg_dynamic(object):
             #         if len(path) != 0 and self.distance(n.config, path[-1]) < 1e-2:
             #             n.rewire(new, d, path[:-1], iteration=it)
         if goal_n is None:
+            return 2
             # print("NO!!! distance between start and goal in the update rrg short call and length", self.distance(start, self.goal), len(self.nodes))
             # print("goal_n is none in rrg short call", it, time()- t0)
             # return True
-            return 2
   
