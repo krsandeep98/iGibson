@@ -20,11 +20,12 @@ from igibson.tasks.interactive_nav_random_task import InteractiveNavRandomTask
 from igibson.tasks.point_nav_fixed_task import PointNavFixedTask
 from igibson.tasks.point_nav_random_task import PointNavRandomTask
 from igibson.tasks.reaching_random_task import ReachingRandomTask
+from igibson.tasks.dynamic_reaching_random_task import DynamicReachingRandomTask
 from igibson.tasks.room_rearrangement_task import RoomRearrangementTask
 from igibson.utils.constants import MAX_CLASS_COUNT, MAX_INSTANCE_COUNT
 from igibson.utils.utils import quatToXYZW
 
-from igibson.external.pybullet_tools.utils import pairwise_collision, set_base_values
+from igibson.external.pybullet_tools.utils import pairwise_collision, set_base_values, get_collision_fn
 
 class iGibsonEnv(BaseEnv):#, EzPickle
     """
@@ -105,6 +106,8 @@ class iGibsonEnv(BaseEnv):#, EzPickle
             self.task = DynamicNavRandomTask(self)
         elif self.config["task"] == "reaching_random":
             self.task = ReachingRandomTask(self)
+        elif self.config["task"] == "dynamic_reaching_random":
+            self.task = DynamicReachingRandomTask(self)
         elif self.config["task"] == "room_rearrangement":
             self.task = RoomRearrangementTask(self)
         else:
@@ -287,6 +290,49 @@ class iGibsonEnv(BaseEnv):#, EzPickle
             new_collision_links.append(item)
         return new_collision_links
 
+
+    def run_simulation_manip(self):
+        """
+        Run simulation for one action timestep (same as one render timestep in Simulator class)
+
+        :return: collision_links: collisions from last physics timestep
+        """
+        self.simulator_step()
+        collision_links = list(p.getContactPoints(bodyA=self.robots[0].robot_ids[0]))
+        return self.filter_collision_links_manip(collision_links)
+
+    def filter_collision_links_manip(self, collision_links):
+        """
+        Filter out collisions that should be ignored
+
+        :param collision_links: original collisions, a list of collisions
+        :return: filtered collisions
+        """
+        new_collision_links = []
+        for item in collision_links:
+            # print("item in filter coll links", self.robots[0].robot_ids[0], item[0], item[1],item[2],item[3],item[4])
+            # ignore collision with body b
+            if item[2] in self.collision_ignore_body_b_ids:
+                continue
+
+            # ignore collision with robot link a
+            if item[3] in self.collision_ignore_link_a_ids:
+                continue
+
+            # ignore self collision with robot link a (body b is also robot itself)
+            if item[2] == self.robots[0].robot_ids[0] and item[4] in self.collision_ignore_link_a_ids:
+                continue
+            
+            # this is for the disabled collisions for the fetch robot, and its combination
+            if item[2] == self.robots[0].robot_ids[0] and item[3]==3 and item[4] in {13, 14, 15, 16, 22}:
+                # print("disabled_collisions working in dry run step, item", item)
+                continue
+            if item[2] == self.robots[0].robot_ids[0] and item[4]==3 and item[3] in {13, 14, 15, 16, 22}:
+                # print("disabled_collisions working in dry run step, item", item)
+                continue
+            new_collision_links.append(item)
+        return new_collision_links
+    
     def populate_info(self, info):
         """
         Populate info dictionary with any useful information
@@ -325,6 +371,71 @@ class iGibsonEnv(BaseEnv):#, EzPickle
             state = self.reset()
 
         return state, reward, done, info
+    
+
+    def step_dry_run(self):
+        """
+        Apply robot's action. updated by sandeep
+        :return: info: info dictionary with any useful information
+        """
+        self.max_collisions_allowed = self.config.get("max_collisions_allowed", 5)
+
+        self.current_step += 1
+        # if action is not None:
+        #     self.robots[0].apply_action(action)
+        collision_links = self.run_simulation()
+        self.collision_links = collision_links
+        self.collision_step += int(len(collision_links) > 0)
+
+        # state = self.get_state(collision_links)
+        # info = {}
+        # reward, info = self.task.get_reward(self, collision_links, action, info)
+        # done, info = self.task.get_termination(self, collision_links, action, info)
+        # self.task.step(self)
+        # self.populate_info(info)
+        
+        done = self.collision_step > self.max_collisions_allowed
+        if done:
+            print("done in the dry_run_step function, and coll_step", done, self.collision_step)
+
+        # if done and self.automatic_reset:
+        #     info["last_observation"] = state
+        #     state = self.reset()
+
+        # return state, reward, done, info
+        return done
+
+    def step_dry_run_manip(self):
+        """
+        Apply robot's action. updated by sandeep
+        :return: info: info dictionary with any useful information
+        """
+        self.max_collisions_allowed = self.config.get("max_collisions_allowed", 5)
+
+        self.current_step += 1
+        # if action is not None:
+        #     self.robots[0].apply_action(action)
+        collision_links = self.run_simulation_manip()
+        self.collision_links = collision_links
+        self.collision_step += int(len(collision_links) > 0)
+
+        # state = self.get_state(collision_links)
+        # info = {}
+        # reward, info = self.task.get_reward(self, collision_links, action, info)
+        # done, info = self.task.get_termination(self, collision_links, action, info)
+        # self.task.step(self)
+        # self.populate_info(info)
+        
+        done = self.collision_step > self.max_collisions_allowed
+        if done:
+            print("done in the dry_run_step function, and coll_step", done, self.collision_step)
+
+        # if done and self.automatic_reset:
+        #     info["last_observation"] = state
+        #     state = self.reset()
+
+        # return state, reward, done, info
+        return done
 
     def check_collision(self, body_id):
         """
@@ -397,6 +508,12 @@ class iGibsonEnv(BaseEnv):#, EzPickle
         set_base_values(body.robot_ids[0], q)
         # self.set_pos_orn_with_z_offset(body, q, orn)#set base values function from pybullet utils
         return not(any(pairwise_collision(body.robot_ids[0], obs, max_distance=max_distance) for obs in obstacles))
+
+
+
+
+    def collision_function_manip(self, body, q):
+
 
     def land(self, obj, pos, orn):
         """

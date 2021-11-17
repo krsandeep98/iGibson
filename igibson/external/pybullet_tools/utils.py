@@ -22,6 +22,7 @@ from igibson.external.motion.motion_planners.rrt_connect import birrt, direct_pa
 from igibson.external.motion.motion_planners.rrt_star import rrt_star
 from igibson.external.motion.motion_planners.rrg import rrg
 from igibson.external.motion.motion_planners.rrg_dynamic import rrg_dynamic
+from igibson.external.motion.motion_planners.rrt_dynamic import rrt_dynamic
 from igibson.external.motion.motion_planners.lazy_prm import lazy_prm_replan_loop
 from igibson.external.motion.motion_planners.rrt import rrt
 from igibson.external.motion.motion_planners.smoothing import optimize_path
@@ -3003,6 +3004,46 @@ def plan_joint_motion(body, joints, end_conf, obstacles=[], attachments=[],
     else:
         return None
 
+def plan_joint_motion_ref_static_dynamic(body, joints, end_conf, obstacles=[], dynamic_obstacles = [], attachments=[],
+                      self_collisions=True, disabled_collisions=set(),
+                      weights=None, resolutions=None, max_distance=MAX_DISTANCE, custom_limits={}, algorithm='birrt', allow_collision_links=[], max_time=50, **kwargs):
+
+    assert len(joints) == len(end_conf)
+    sample_fn = get_sample_fn(body, joints, custom_limits=custom_limits)
+    distance_fn = get_distance_fn(body, joints, weights=weights)
+    extend_fn = get_extend_fn(body, joints, resolutions=resolutions)
+    collision_fn = get_collision_fn(body, joints, obstacles, attachments, self_collisions, disabled_collisions,
+                                    custom_limits=custom_limits, max_distance=max_distance, allow_collision_links=allow_collision_links)
+
+    collision_fn_dynamic = get_collision_fn(body, joints, dynamic_obstacles, attachments, self_collisions, disabled_collisions,
+                                    custom_limits=custom_limits, max_distance=max_distance, allow_collision_links=allow_collision_links)
+
+    start_conf = get_joint_positions(body, joints)
+
+    # if not check_initial_end(start_conf, end_conf, collision_fn):
+    #     return None, None, True
+
+    if collision_fn_dynamic(start_conf):
+        print("WARNING: initial configuration is in collision in plan joint motion call for dynamic one")
+        return None, None, True
+    if collision_fn_dynamic(end_conf):
+        print("WARNING: end configuration is in collision in plan joint motion call for dynamic one")
+        return None, None, True
+    # return rrg(start_conf, end_conf, distance_fn, sample_fn, extend_fn, collision_fn, max_iterations=5000, **kwargs)
+    
+    ref_rrg = rrg_dynamic(end_conf, distance_fn, sample_fn, extend_fn, collision_fn, collision_fn_dynamic)#, **kwargs
+    ref_rrg.rrg(start_conf, max_time = max_time, max_iterations=500)
+
+    return ref_rrg, ref_rrg.reference_traj, False
+
+# def plan_joint_motion_update_dynamic_rrg(ref_rrg, body, ref_traj, end_conf,  obstacles=[], algorithm = 'rrg',
+#                      max_distance=MAX_DISTANCE,  max_time=10):
+def plan_joint_motion_update_dynamic_rrg(ref_rrg, body, joints, ref_traj, max_time=10):
+
+    start_conf = get_joint_positions(body, joints)
+
+    collision_var = ref_rrg.rrg_update_2paths(start_conf, ref_traj, max_time = max_time, max_iterations=250)
+    return ref_rrg.reference_traj, ref_rrg.next_traj, collision_var
 
 def plan_lazy_prm(start_conf, end_conf, sample_fn, extend_fn, collision_fn, **kwargs):
     # TODO: cost metric based on total robot movement (encouraging greater distances possibly)
@@ -3126,7 +3167,7 @@ def get_base_distance_fn(weights=1*np.ones(3)):
 
 def plan_base_motion(body, end_conf, base_limits, obstacles=[], direct=False,
                      weights=1*np.ones(3), resolutions=0.05*np.ones(3),
-                     max_distance=MAX_DISTANCE, algorithm = 'rrg', max_time=10, **kwargs):
+                     max_distance=MAX_DISTANCE, algorithm = 'rrg', max_time=50, **kwargs):
     def sample_fn():
         x, y = np.random.uniform(*base_limits)
         theta = np.random.uniform(*CIRCULAR_LIMITS)
@@ -3173,10 +3214,10 @@ def plan_base_motion(body, end_conf, base_limits, obstacles=[], direct=False,
 
     start_conf = get_base_values(body.robot_ids[0])#body
     if collision_fn(start_conf):
-        print("WARNING: initial configuration is in collision in plan base motion call")
+        print("WARNING: initial configuration is in collision in plan base motion call for dyn obstacle")
         return None, True
     if collision_fn(end_conf):
-        print("WARNING: end configuration is in collision in plan base motion call")
+        print("WARNING: end configuration is in collision in plan base motion call for dyn obstacle")
         return None, True
     # if direct:
     #     return direct_path(start_conf, end_conf, extend_fn, collision_fn)
@@ -3185,7 +3226,7 @@ def plan_base_motion(body, end_conf, base_limits, obstacles=[], direct=False,
 
     if algorithm == 'rrg':
         return rrg(start_conf, end_conf, distance_fn, sample_fn, extend_fn, collision_fn, 
-                    max_time = max_time, max_iterations=500, **kwargs)
+                    max_time = max_time, max_iterations=1500, **kwargs)
     else:
         return rrt(start_conf, end_conf, distance_fn, sample_fn, extend_fn, collision_fn, iterations=500, **kwargs)
     # return rrg(start_conf, end_conf, distance_fn, sample_fn, extend_fn, collision_fn, max_time=50, max_iterations=5000, **kwargs)
@@ -3331,13 +3372,16 @@ def plan_base_motion_ref_stat_dynamic(body, end_conf, base_limits, obstacles=[],
     # return birrt(start_conf, end_conf, distance_fn,
     #              sample_fn, extend_fn, collision_fn, **kwargs)
 
-    # if algorithm == 'rrg':
-    ref_rrg = rrg_dynamic(end_conf, distance_fn, sample_fn, extend_fn, collision_fn, collision_fn_dynamic)#, **kwargs
-    ref_rrg.rrg(start_conf, max_time = max_time, max_iterations=500)
+    if algorithm == 'rrg':
+        ref_rrg = rrg_dynamic(end_conf, distance_fn, sample_fn, extend_fn, collision_fn, collision_fn_dynamic)#, **kwargs
+        ref_rrg.rrg(start_conf, max_time = max_time, max_iterations=500)
+    else:#algorithm == 'rrt'
+        ref_rrg = rrt_dynamic(end_conf, distance_fn, sample_fn, extend_fn, collision_fn, collision_fn_dynamic)#, **kwargs
+        ref_rrg.rrt(start_conf, max_time = max_time, max_iterations=500)
 
     return ref_rrg, ref_rrg.reference_traj, False
 
-def plan_base_motion_update_dynamic_rrg(ref_rrg, body, ref_traj, end_conf,  obstacles=[],
+def plan_base_motion_update_dynamic_rrg(ref_rrg, body, ref_traj, end_conf,  obstacles=[], algorithm = 'rrg',
                      max_distance=MAX_DISTANCE,  max_time=10):
     
     # def collision_fn(q):
@@ -3357,8 +3401,13 @@ def plan_base_motion_update_dynamic_rrg(ref_rrg, body, ref_traj, end_conf,  obst
     
     # ref_rrg = rrg_dynamic(end_conf, distance_fn, sample_fn, extend_fn, collision_fn)#, **kwargs
     # collision_var = False
-    collision_var = ref_rrg.rrg_update(start_conf, ref_traj, max_time = max_time, max_iterations=250)
-    return ref_rrg.reference_traj, collision_var#(not collision_var) #False
+    # collision_var = ref_rrg.rrg_update(start_conf, ref_traj, max_time = max_time, max_iterations=250)
+    if algorithm == 'rrg':
+        collision_var = ref_rrg.rrg_update_2paths(start_conf, ref_traj, max_time = max_time, max_iterations=250)
+        return ref_rrg.reference_traj, ref_rrg.next_traj, collision_var#(not collision_var) #False
+    else:#algorithm == 'rrt' 
+        collision_var = ref_rrg.rrt_update_2paths(start_conf, ref_traj, max_time = max_time, max_iterations=250)
+        return ref_rrg.reference_traj, ref_rrg.next_traj, collision_var#(not collision_var) #False
 
 
 
