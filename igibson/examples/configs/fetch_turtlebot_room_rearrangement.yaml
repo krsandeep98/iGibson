@@ -1,8 +1,9 @@
 # scene
 # scene: igibson
 # scene_id: Rs_int
-scene: gibson #stadium
-scene_id: Rs
+scene: gibson
+# scene_id: Rs
+scene_id: Ackermanville
 build_graph: true
 load_texture: true
 pybullet_load_texture: true
@@ -22,10 +23,14 @@ torso_lift_velocity: 0.8
 arm_velocity: 0.8
 
 #robot2
-# robot2: Turtlebot
+# robot: Turtlebot
 # is_discrete: false
 # velocity: 1.0
 
+
+# robot2: Turtlebot
+# is_discrete: false
+# velocity: 1.0
 
 # task
 task: dynamic_nav_random
@@ -52,7 +57,7 @@ discount_factor: 0.99
 
 # termination condition
 max_step: 500
-max_collisions_allowed: 500
+max_collisions_allowed: 5 #500
 
 # misc config
 initial_pos_z_offset: 0.1

@@ -1,8 +1,8 @@
 # scene
-scene: igibson
-scene_id: Rs_int
-# scene: gibson
-# scene_id: Rs
+# scene: igibson
+# scene_id: Rs_int
+scene: gibson
+scene_id: Rs
 build_graph: true
 load_texture: true
 pybullet_load_texture: true
@@ -22,13 +22,13 @@ torso_lift_velocity: 0.8
 arm_velocity: 0.8
 
 #robot2
-robot2: Turtlebot
-is_discrete: false
-velocity: 1.0
+# robot2: Turtlebot
+# is_discrete: false
+# velocity: 1.0
 
 
 # task
-task: point_nav_fixed
+task: dynamic_reaching_random
 # task: room_rearrangement
 load_object_categories: [
   bottom_cabinet,
@@ -52,11 +52,12 @@ discount_factor: 0.99
 
 # termination condition
 max_step: 500
-max_collisions_allowed: 500
+max_collisions_allowed: 20
 
 # misc config
 initial_pos_z_offset: 0.1
-collision_ignore_link_a_ids: [0, 1, 2]  # ignore collisions with these robot links
+# collision_ignore_link_a_ids: [0, 1, 2]  # ignore collisions with these robot links
+collision_ignore_link_a_ids: [0, 1, 2, 19]  # ignore collisions with these robot links, include the 19 allow_coll_links
 
 # sensor spec
 output: [rgb, depth, scan, occupancy_grid]
