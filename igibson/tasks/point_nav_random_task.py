@@ -26,7 +26,7 @@ class PointNavRandomTask(PointNavFixedTask):
         :return: initial pose and target position
         """
         # _, initial_pos = env.scene.get_random_point(floor=self.floor_num)
-        initial_pos = [0, 0, 0]
+        initial_pos = [0.5, -0.5, 0]
         max_trials = 10#100
         dist = 0.0
         for _ in range(max_trials):
@@ -39,6 +39,7 @@ class PointNavRandomTask(PointNavFixedTask):
                 _, dist = env.scene.get_shortest_path(
                     self.floor_num, initial_pos[:2], target_pos[:2], entire_path=False
                 )
+                # print(" dist in the build graph part of the sample target pos", dist)
             else:
                 dist = l2_distance(initial_pos, target_pos)
             if self.target_dist_min < dist < self.target_dist_max:
@@ -75,12 +76,13 @@ class PointNavRandomTask(PointNavFixedTask):
             initial_pos, initial_orn, target_pos = self.sample_initial_pose_and_target_pos(env)
             reset_success = env.test_valid_position(
                 env.robots[0], initial_pos, initial_orn
-            ) and env.test_valid_position(env.robots[0], target_pos)
+            # ) and env.test_valid_position(env.robots[0], target_pos)
+            ) and env.collision_function_manip(env.robots[0].robot_ids[0], target_pos)
             # reset_success = env.collision_function(
             #     env.robots[0], initial_pos) and env.collision_function(env.robots[0], target_pos)
 
             # print("validity of start for fetch agent in task file", env.test_valid_position(env.robots[0], initial_pos, initial_orn), initial_pos, initial_orn)
-            # print("validity of goal for fetch agent in task file", env.collision_function(env.robots[0], target_pos), target_pos)
+            # print("validity of goal for fetch agent in task file", env.collision_function_manip(env.robots[0].robot_ids[0], target_pos), target_pos)
             # print("validity of goal for fetch agent in task file, number of trial, init, target", reset_success, i, initial_pos, target_pos)
             p.restoreState(state_id)
             if reset_success:
