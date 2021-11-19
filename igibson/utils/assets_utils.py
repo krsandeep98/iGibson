@@ -184,7 +184,7 @@ def download_assets():
 
     if not os.path.exists(igibson.assets_path):
         os.system(
-            "wget -c --retry-connrefused --tries=5 --timeout=5 "
+            "wget -c --retry-connrefused --tries=5 --timeout=5 --no-check-certificate "
             "https://storage.googleapis.com/gibson_scenes/assets_igibson.tar.gz -O /tmp/assets_igibson.tar.gz"
         )
         os.system("tar -zxf /tmp/assets_igibson.tar.gz --directory {}".format(os.path.dirname(igibson.assets_path)))
@@ -199,7 +199,7 @@ def download_demo_data():
 
     if not os.path.exists(os.path.join(igibson.g_dataset_path, "Rs")):
         os.system(
-            "wget -c --retry-connrefused --tries=5 --timeout=5  "
+            "wget -c --retry-connrefused --tries=5 --timeout=5 --no-check-certificate "
             "https://storage.googleapis.com/gibson_scenes/Rs.tar.gz -O /tmp/Rs.tar.gz"
         )
         os.system("tar -zxf /tmp/Rs.tar.gz --directory {}".format(igibson.g_dataset_path))
