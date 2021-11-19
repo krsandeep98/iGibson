@@ -536,7 +536,7 @@ def main():
     short_interval_success_counter = 0
     new_path_for_agent = None
     total_time_taken = 0
-    for j in range(500):
+    for j in range(5):
         # collision2 = False
         collision2 = 100
         collision_in_exec = False

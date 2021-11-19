@@ -512,7 +512,7 @@ class iGibsonEnv(BaseEnv):#, EzPickle
 
 
 
-    def collision_function_manip(self, body, q):
+    # def collision_function_manip(self, body, q):
 
 
     def land(self, obj, pos, orn):

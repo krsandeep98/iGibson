@@ -23,8 +23,10 @@ apt-get update && apt-get install -y --no-install-recommends \
 ```
 git clone https://github.com/krsandeep98/iGibson --recursive
 cd iGibson
+git checkout ig-develop
+git submodule update
 
-conda create -y -n igibson python=3.8
+conda create -n igibson python=3.6
 conda activate igibson
 
 pip install -e . # This step takes about 4 minutes
@@ -43,7 +45,15 @@ The installation guide on the [iGibson Documentation](http://svl.stanford.edu/ig
 After installing iGibson from the installation guide on the [iGibson Documentation](http://svl.stanford.edu/igibson/docs/) webpage, we can get to running different robots finishing navigation and manipulation tasks using the following instructions:
 
 - Make sure to activate your virtual environment `conda activate igibson`
-- Head over to `examples/demo` folder and there you would find multiple demos and you can experiment with those to get a good idea of the wide variety of things which you can do in iGibson
+- Head over to `igibson/examples/demo` folder and there you would find multiple demos and you can experiment with those to get a good idea of the wide variety of things which you can do in iGibson
+- for running a navigation task, run the following command
+```
+  python realtime_loop_env_interactive_example_dynamic_nav_rrg_with_changed_global_clock.py
+```
+- for running a manipulation task, run this instead
+```
+  python manipulation_realtime_loop_env_interactive_example_dynamic_nav_rrg_with_changed_global_clock.py
+```
 - 
 <!-- iGibson is a simulation environment providing fast visual rendering and physics simulation based on Bullet. iGibson is equipped with fifteen fully interactive high quality scenes, hundreds of large 3D scenes reconstructed from real homes and offices, and compatibility with datasets like CubiCasa5K and 3D-Front, providing 8000+ additional interactive scenes. Some of the features of iGibson include domain randomization, integration with motion planners and easy-to-use tools to collect human demonstrations. With these scenes and features, iGibson allows researchers to train and evaluate robotic agents that use visual signals to solve navigation and manipulation tasks such as opening doors, picking up and placing objects, or searching in cabinets. -->
 
