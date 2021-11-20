@@ -268,7 +268,7 @@ The installation guide on the [iGibson Documentation](http://svl.stanford.edu/ig
 <!-- <img src="./docs/images/igibsonlogo.png" width="500"> <img src="./docs/images/igibson.gif" width="250">  -->
 After installing iGibson from the installation guide on the [iGibson Documentation](http://svl.stanford.edu/igibson/docs/) webpage, we can get to running different robots finishing navigation and manipulation tasks using the following instructions:
 
-- Make sure to activate your virtual environment `conda activate igibson`
+- Make sure to activate your virtual environment `conda activate igibson` and checkout the `git checkout ig-develop` branch
 - Head over to `igibson/examples/demo` folder and there you would find multiple demos and you can experiment with those to get a good idea of the wide variety of things which you can do in iGibson
 - for running a Navigation task (reaching a random target position from a fixed start position in presence of dynamic obstacles) with a Turtlebot, run the following command:
 ```
