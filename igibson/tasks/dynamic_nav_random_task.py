@@ -46,8 +46,8 @@ class DynamicNavRandomTask(PointNavRandomTask):
             state_id = p.saveState()
             for _ in range(max_trials):
                 # _, pos = env.scene.get_random_point(floor=self.floor_num)
-                # pos = [-1.5, 0.75, 0]#for gibson RS
-                pos = [-1, -1, 0]#for gibson Aloha
+                pos = [-1.5, 0.75, 0]#for gibson RS
+                # pos = [-1, -1, 0]#for gibson Aloha
                 
                 # orn = np.array([0, 0, 3*np.pi / 4])
                 orn = np.array([0, 0, np.random.uniform(0, np.pi * 2)])

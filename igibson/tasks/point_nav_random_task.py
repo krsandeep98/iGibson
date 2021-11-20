@@ -76,8 +76,8 @@ class PointNavRandomTask(PointNavFixedTask):
             initial_pos, initial_orn, target_pos = self.sample_initial_pose_and_target_pos(env)
             reset_success = env.test_valid_position(
                 env.robots[0], initial_pos, initial_orn
-            # ) and env.test_valid_position(env.robots[0], target_pos)
-            ) and env.collision_function_manip(env.robots[0].robot_ids[0], target_pos)
+            ) and env.test_valid_position(env.robots[0], target_pos)
+            # ) and env.collision_function_manip(env.robots[0].robot_ids[0], target_pos)
             # reset_success = env.collision_function(
             #     env.robots[0], initial_pos) and env.collision_function(env.robots[0], target_pos)
 

@@ -505,20 +505,21 @@ def main():
     config_filename = os.path.join(igibson.example_config_path, "turtlebot_dynamic_nav.yaml")
     # config_filename = os.path.join(igibson.example_config_path, "fetch_turtlebot_room_rearrangement.yaml")
     # config_filename = os.path.join(igibson.example_config_path, "turtlebot_point_nav.yaml")
-    env = iGibsonEnv(config_file=config_filename, mode="headless")
+    # env = iGibsonEnv(config_file=config_filename, mode="headless")
+    env = iGibsonEnv(config_file=config_filename, mode="gui")
     
     
     env.reset()
     
     # this is for gibson RS
-    # goal1 = [1, 1, 0]#env.task.target_pos1 1, -1 works for dynamic one
-    # path_for_base_obs, collision_for_dynamic_obs = plan_base_motion_dynamic(env, goal1, 0)
-    # reverse_path_from_b2a, coll_again_for_dynamic = plan_base_motion_dynamic(env, [-1.5, 0.75, 0], 0)
+    goal1 = [1, 1, 0]#env.task.target_pos1 1, -1 works for dynamic one
+    path_for_base_obs, collision_for_dynamic_obs = plan_base_motion_dynamic(env, goal1, 0)
+    reverse_path_from_b2a, coll_again_for_dynamic = plan_base_motion_dynamic(env, [-1.5, 0.75, 0], 0)
 
     #2, -1 is a good goal, starting from -1, -1 for ACKERMANVILLE
-    goal1 = [2, -1, 0]#-2.5, -2.5 is a good goal, starting from -1, -1 for ALOHA
-    path_for_base_obs, collision_for_dynamic_obs = plan_base_motion_dynamic(env, goal1, 0)
-    reverse_path_from_b2a, coll_again_for_dynamic = plan_base_motion_dynamic(env, [-1, -1, 0], 0)
+    # goal1 = [2, -1, 0]#-2.5, -2.5 is a good goal, starting from -1, -1 for ALOHA
+    # path_for_base_obs, collision_for_dynamic_obs = plan_base_motion_dynamic(env, goal1, 0)
+    # reverse_path_from_b2a, coll_again_for_dynamic = plan_base_motion_dynamic(env, [-1, -1, 0], 0)
     # reverse_path_from_b2a = path_for_base1[::-1]
     path_for_base_original = path_for_base_obs + reverse_path_from_b2a
     path_for_base_original = path_for_base_original + path_for_base_original + path_for_base_original + path_for_base_original
