@@ -2,13 +2,14 @@ import numpy as np
 
 from igibson.reward_functions.point_goal_reward import PointGoalReward
 from igibson.reward_functions.reaching_goal_reward import ReachingGoalReward
-from igibson.tasks.point_nav_random_task import PointNavRandomTask
+# from igibson.tasks.point_nav_random_task import PointNavRandomTask
+from igibson.tasks.point_reach_random_task import PointReachRandomTask
 from igibson.termination_conditions.point_goal import PointGoal
 from igibson.termination_conditions.reaching_goal import ReachingGoal
 from igibson.utils.utils import l2_distance
 
 
-class ReachingRandomTask(PointNavRandomTask):
+class ReachingRandomTask(PointReachRandomTask):
     """
     Reaching Random Task
     The goal is to reach a random goal position with the robot's end effector

@@ -31,8 +31,8 @@ class DynamicReachingRandomTask(ReachingRandomTask):
         """
         dynamic_objects = []
         for _ in range(self.num_dynamic_objects):
-            # robot = Turtlebot(self.config)
-            robot = Fetch(self.config)
+            robot = Turtlebot(self.config)
+            # robot = Fetch(self.config)
             env.simulator.import_robot(robot)
             dynamic_objects.append(robot)
         return dynamic_objects
