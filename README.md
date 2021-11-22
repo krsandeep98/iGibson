@@ -283,7 +283,8 @@ After installing iGibson from the installation guide on the [iGibson Documentati
   python manipulation_realtime_loop_env_interactive_example_dynamic_nav_rrg_with_changed_global_clock.py
 ```
 
-For all the experiments you will see threee windows, one is the Robot view (for the different robots in the scene), the second is the External view which is the view from a fixed camera position, and the third is the 3rd person overview of the environment and shows the movement of all the robots in the environment.
+For all the experiments you will see three windows, one is the Robot view (for the different robots in the scene), the second is the External view which is the view from a fixed camera position, and the third is the 3rd person overview of the environment and shows the movement of all the robots in the environment. The third window (3rd person overview would also show the robot moving very rapidly from one position to other, that's not the actual movement and it is just for the collision checks as the motion planner is checking for the validity of configurations in that way).
+
 
 <!-- iGibson is a simulation environment providing fast visual rendering and physics simulation based on Bullet. iGibson is equipped with fifteen fully interactive high quality scenes, hundreds of large 3D scenes reconstructed from real homes and offices, and compatibility with datasets like CubiCasa5K and 3D-Front, providing 8000+ additional interactive scenes. Some of the features of iGibson include domain randomization, integration with motion planners and easy-to-use tools to collect human demonstrations. With these scenes and features, iGibson allows researchers to train and evaluate robotic agents that use visual signals to solve navigation and manipulation tasks such as opening doors, picking up and placing objects, or searching in cabinets. -->
 
