@@ -505,8 +505,8 @@ def main():
     config_filename = os.path.join(igibson.example_config_path, "turtlebot_dynamic_nav.yaml")
     # config_filename = os.path.join(igibson.example_config_path, "fetch_turtlebot_room_rearrangement.yaml")
     # config_filename = os.path.join(igibson.example_config_path, "turtlebot_point_nav.yaml")
-    # env = iGibsonEnv(config_file=config_filename, mode="headless")
-    env = iGibsonEnv(config_file=config_filename, mode="gui")
+    env = iGibsonEnv(config_file=config_filename, mode="headless")
+    # env = iGibsonEnv(config_file=config_filename, mode="gui")
     
     
     env.reset()
